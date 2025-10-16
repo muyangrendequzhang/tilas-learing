@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.mapper.EmpMapper">
+    <update id="updateEmp">
+        UPDATE emp
+        <set>
+            <!-- 字符串类型：判断非null（若需排除空串，可加 and username != ''） -->
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <!-- 整数/枚举类型：仅判断非null（引用类型默认值为null，无需判断空串） -->
+            <if test="gender != null">
+                gender = #{gender},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="job != null">
+                job = #{job},
+            </if>
+            <if test="salary != null">
+                salary = #{salary},
+            </if>
+            <!-- 图片路径（字符串）：判断非null -->
+            <if test="image != null">
+                image = #{image},
+            </if>
+            <!-- 日期类型（LocalDate/LocalDateTime）：判断非null -->
+            <if test="entryDate != null">
+                entry_date = #{entryDate},
+            </if>
+            <if test="deptId != null">
+                dept_id = #{deptId},
+            </if>
+            <!-- 注意：createTime（创建时间）通常无需更新，可根据业务决定是否保留 -->
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        <!-- 必须通过主键定位更新记录，避免全表更新 -->
+        WHERE id = #{id}
+    </update>
+    <delete id="delete">
+        delete from emp where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="list" resultType="com.itheima.pojo.Emp">
+            select e.*,d.name from emp e left join dept d on e.dept_id = d.id
+            <where>
+                <if test="name != null and name != ''">
+                    e.name like concat('%',#{name},'%')
+                </if>
+                <if test="gender != null">
+                    and e.gender = #{gender}
+                </if>
+                <if test="begin != null and end !=null">
+                    and e.entry_date between #{begin} and #{end}
+                </if>
+            </where>
+            order by e.update_time desc
+    </select>
+
+    <!-- 一一映射   -->
+    <resultMap id="empResultMap" type="com.itheima.pojo.Emp">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="phone" property="phone"/>
+        <result column="job" property="job"/>
+        <result column="salary" property="salary"/>
+        <result column="image" property="image"/>
+        <result column="entry_date" property="entryDate"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        
+        <collection property="exprList" ofType="com.itheima.pojo.EmpExpr">
+            <id column="ee_id" property="id"/>
+            <result column="ee_emp_id" property="empId"/>
+            <result column="ee_begin" property="begin"/>
+            <result column="ee_end" property="end"/>
+            <result column="ee_company" property="company"/>
+            <result column="ee_job" property="job"/>
+        </collection>
+    </resultMap>
+
+    <select id="getInfo" resultMap="empResultMap">
+        select e.*,
+        ee.id ee_id,
+        ee.emp_id ee_emp_id,
+        ee.begin ee_begin,
+        ee.end ee_end,
+        ee.company ee_company,
+        ee.job ee_job
+        from emp e left join emp_expr ee on e.id = ee.emp_id where e.id = #{id};
+    </select>
+
+    <select id="countEmpJobData" resultType="java.util.Map">
+        select (case job
+        when 1 then '班主任'
+        when 2 then '讲师'
+        when 3 then '学工主管'
+        when 4 then '教研主管'
+        when 5 then '咨询师'
+        else '其他' end) pos
+        ,count(*) num from emp group by job
+        order by num
+    </select>
+    <select id="getGenderData" resultType="java.util.Map">
+        select  (case gender
+        when 1 then '男性员工'
+        when 2 then '女性员工'
+        else '其他' end) name
+        ,count(*) value from emp group by gender;
+    </select>
+    <select id="getClassNum" resultType="java.util.Map">
+        select clazz.name clazzList,count(*)
+        dataList from student s left join clazz on clazz.id = s.clazz_id group by clazz.name;
+    </select>
+</mapper>

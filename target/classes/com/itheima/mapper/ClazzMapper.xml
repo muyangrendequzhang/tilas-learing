@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.mapper.ClazzMapper">
+    <update id="updateInfo">
+        UPDATE clazz
+        <!--
+            <set>标签作用：
+            1. 自动拼接"SET"关键字
+            2. 自动剔除最后一个字段后的多余逗号（避免SQL语法错误）
+        -->
+        <set>
+            <!-- 1. 字符串类型字段：判断非null且非空串（避免更新为空串覆盖原有值） -->
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <!-- 若room允许更新为空串（如用户主动清空教室），可去掉 "and room != ''" -->
+            <if test="room != null and room != ''">
+                room = #{room},
+            </if>
+            <if test="beginDate != null">
+                begin_date = #{beginDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+
+            <!-- 2. 整数类型字段：仅判断非null（引用类型默认值为null，无需判断空串） -->
+            <if test="masterId != null">
+                master_id = #{masterId},
+            </if>
+            <if test="subject != null">
+                subject = #{subject}  <!-- 最后一个字段不加逗号，<set>会自动处理 -->
+            </if>
+        </set>
+
+        <!-- 3. 必须通过主键ID定位更新记录（避免全表更新，致命！） -->
+        WHERE id = #{id}
+    </update>
+
+
+    <select id="list" resultType="com.itheima.pojo.Clazz">
+        select c.id,c.name,c.room,c.begin_date,c.end_date,c.master_id,c.create_time,c.update_time,e.name masterName from clazz c left join emp e on c.master_id=e.id
+    </select>
+    <select id="getDegreeInfo" resultType="java.util.Map">
+        select (case degree
+        when 1 then '初中'
+        when 2 then '高中'
+        when 3 then '大专'
+        when 4 then '本科'
+        when 5 then '硕士'
+        when 6 then '博士'
+        end ) name
+        ,count(*) value from student group by degree
+    </select>
+</mapper>

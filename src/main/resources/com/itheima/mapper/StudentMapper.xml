@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.mapper.StudentMapper">
+
+    <!-- 定义结果映射：指定数据库字段与实体类属性的对应关系 -->
+    <resultMap id="StudentResultMap" type="com.itheima.pojo.Student">
+        <!-- 主键映射 -->
+        <id column="id" property="id"/>
+        <!-- 其他基本字段映射 -->
+        <result column="name" property="name"/>
+        <result column="no" property="no"/>
+        <result column="gender" property="gender"/>
+        <result column="phone" property="phone"/>
+        <result column="degree" property="degree"/>
+        <result column="id_card" property="idCard"/> <!-- 下划线转驼峰 -->
+        <result column="is_college" property="isCollege"/>
+        <result column="address" property="address"/>
+        <result column="graduation_date" property="graduationDate"/>
+        <result column="violation_count" property="violationCount"/>
+        <result column="clazz_id" property="clazzId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <!-- 关键：手动绑定 clazzName（数据库字段是 clazzName，实体类属性是 clazzName） -->
+        <result column="clazzName" property="clazzName"/>
+    </resultMap>
+    <update id="updateInfo">
+        UPDATE student
+        <set>
+            <!-- 1. 字符串类型字段：判断“非null且非空串”（避免更新为空串覆盖原有值） -->
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="no != null and no != ''">
+                no = #{no},
+            </if>
+            <if test="phone != null and phone != ''">
+                phone = #{phone},
+            </if>
+            <if test="idCard != null and idCard != ''">
+                id_card = #{idCard},
+            </if>
+            <if test="address != null and address != ''">
+                address = #{address},
+            </if>
+
+            <!-- 2. 数值类型字段：仅判断“非null”（引用类型默认值为null，无需判断空串） -->
+            <if test="gender != null">
+                gender = #{gender},
+            </if>
+            <if test="degree != null">
+                degree = #{degree},
+            </if>
+            <if test="isCollege != null">
+                is_college = #{isCollege},
+            </if>
+            <if test="clazzId != null">
+                clazz_id = #{clazzId},
+            </if>
+            <if test="violationCount != null">
+                violation_count = #{violationCount},
+            </if>
+            <if test="violationScore != null">
+                violation_score = #{violationScore},
+            </if>
+
+            <!-- 3. 日期类型字段：仅判断“非null” -->
+            <if test="graduationDate != null">
+                graduation_date = #{graduationDate},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime} <!-- 最后一个字段不加逗号，<set>会自动处理 -->
+            </if>
+        </set>
+
+        <!-- 4. 必须通过ID定位更新记录（避免全表更新） -->
+        WHERE id = #{id}
+
+    </update>
+    <delete id="delete">
+        DELETE FROM student
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="page" resultType="com.itheima.pojo.Student">
+        SELECT
+        s.id,
+        s.name,
+        s.no,
+        s.gender,
+        s.phone,
+        s.degree,
+        s.id_card,
+        s.is_college,
+        s.address,
+        s.graduation_date,
+        s.violation_score,
+        s.violation_count,
+        s.clazz_id,
+        s.create_time,
+        c.name AS clazzName,
+        s.update_time
+          <!-- 关联 clazz 表，取班级名称并别名映射 -->
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id  <!-- 通过 clazz_id 关联班级表 -->
+        <where>
+            <!-- 姓名：字符串，非空时过滤 -->
+            <if test="name != null and name != ''">
+                AND s.name = #{name}
+            </if>
+            <!-- 学历：数值，非空时过滤 -->
+            <if test="degree != null">
+                AND s.degree = #{degree}
+            </if>
+            <!-- 班级ID：数值，非空时过滤 -->
+            <if test="clazzId != null">
+                AND s.clazz_id = #{clazzId}
+            </if>
+        </where>
+    </select>
+</mapper>
