@@ -1,0 +1,5 @@
+# 忽略 IDE 配置目录
+.idea/
+
+# 忽略 Maven/Gradle 编译输出目录
+target/
